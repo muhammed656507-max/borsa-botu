@@ -24,9 +24,12 @@ def telegram_mesaj_gonder(mesaj):
     url = f"https://api.telegram.org/bot{TOKEN}/sendMessage"
     payload = {"chat_id": CHAT_ID, "text": mesaj}
     try:
-        requests.post(url, json=payload)
-    except Exception:
-        pass
+        response = requests.post(url, json=payload)
+        # Eğer Telegram hata dönerse bunu Render loguna yazdır:
+        if response.status_code != 200:
+            print(f"❌ Telegram Hatası: {response.status_code} - {response.text}")
+    except Exception as e:
+        print(f"❌ Bağlantı Hatası: {str(e)}")
 
 def indikatör_hesapla(kapanislar):
     delta = kapanislar.diff()
@@ -45,7 +48,6 @@ def sinyal_control(periyot_adi, yf_interval, yf_period, rsi_ust_sinir):
     for hisse in HISSELER:
         try:
             time.sleep(2)
-            # grup indirmeyi ve gereksiz çıktıları tamamen kapatıyoruz (group_by=False)
             df = yf.download(hisse, period=yf_period, interval=yf_interval, progress=False, auto_adjust=True, group_by=False)
             if df.empty or len(df) < 65:
                 continue
@@ -75,7 +77,9 @@ def sinyal_control(periyot_adi, yf_interval, yf_period, rsi_ust_sinir):
     return sinyal_bulundu
 
 def tarama_tetikle():
-    # İlk başlama mesajını kaldırarak cron-job çıktısını iyice küçültüyoruz
+    # Burası çok önemli: Girişte hemen bir test mesajı gönderiyoruz
+    telegram_mesaj_gonder("🎯 Bot tetiklendi! Tarama fonksiyonu başarıyla başladı.")
+    
     sinyal_g = sinyal_control("GÜNLÜK", "1d", "1y", 80)
     sinyal_h = sinyal_control("HAFTALIK", "1wk", "3y", 70)
     
@@ -86,7 +90,7 @@ def tarama_tetikle():
 def home():
     t = Thread(target=tarama_tetikle)
     t.start()
-    return "OK" # Sadece OK döndürerek çıktıyı sıfırlıyoruz
+    return "OK"
 
 if __name__ == "__main__":
     app.run(host='0.0.0.0', port=8080)
