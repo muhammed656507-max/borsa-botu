@@ -109,6 +109,10 @@ def ana_dongu():
         time.sleep(30) # Saati yakalamak için 30 saniyede bir kontrol eder
 
 if __name__ == "__main__":
+    # Flask sunucusunu arka planda (Daemon olarak) başlatıyoruz
     t = Thread(target=run_flask)
+    t.daemon = True
     t.start()
+    
+    # Ana döngüyü ana işlem olarak çalıştırıyoruz, böylece kilitlenmiyor
     ana_dongu()
