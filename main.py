@@ -1,4 +1,3 @@
-import time
 import requests
 import yfinance as yf
 import pandas as pd
@@ -73,7 +72,7 @@ def sinyal_control(periyot_adi, yf_interval, yf_period, rsi_ust_sinir):
     return sinyal_bulundu
 
 def tarama_tetikle():
-    telegram_mesaj_gonder("🔄 Otomatik tetikleme alındı, periyodik tarama başladı...")
+    telegram_mesaj_gonder("🔄 Otomatik tetikleme alındı, periyodik borsa taraması başladı...")
     
     sinyal_g = sinyal_control("GÜNLÜK", "1d", "1y", 80)
     sinyal_h = sinyal_control("HAFTALIK", "1wk", "3y", 70)
@@ -83,14 +82,9 @@ def tarama_tetikle():
 
 @app.route('/')
 def home():
-    # Birisi siteye girdiğinde veya cron-job tıkladığında tarama arka planda başlar
     t = Thread(target=tarama_tetikle)
     t.start()
-    return "Borsa Botu Tetiklendi ve Taramaya Başladı!"
-
-def run_flask():
-    app.run(host='0.0.0.0', port=8080)
+    return "Borsa Botu Tetiklendi!"
 
 if __name__ == "__main__":
-    telegram_mesaj_gonder("🤖 Bot Başarıyla Güncellendi!\nArtık her link tıklandığında anında tarama yapacaktır.")
-    run_flask()
+    app.run(host='0.0.0.0', port=8080)
