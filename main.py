@@ -67,7 +67,7 @@ def sinyal_kontrol(periyot_adi, yf_interval, yf_period, rsi_ust_sinir):
                 mesaj = f"🚨 [{periyot_adi} GRAFİK] RSI DÜŞÜK (ALIM YAKIN)!\nŞirket: {hisse.split('.')[0]}\nFiyat: {son_fiyat:.2f} TL\nRSI: {son_rsi:.2f}"
                 telegram_mesaj_gonder(mesaj)
                 
-            # Kriter 2: RSI üst sınır aşımı (Günlük 80, Haftalık 70)
+            # Kriter 2: RSI üst sınır aşımı
             if son_rsi > rsi_ust_sinir:
                 mesaj = f"⚠️ [{periyot_adi} GRAFİK] RSI ÇOK YÜKSEK (RİSK)!\nŞirket: {hisse.split('.')[0]}\nFiyat: {son_fiyat:.2f} TL\nRSI: {son_rsi:.2f}"
                 telegram_mesaj_gonder(mesaj)
@@ -82,16 +82,14 @@ def sinyal_kontrol(periyot_adi, yf_interval, yf_period, rsi_ust_sinir):
             pass
 
 def ana_dongu():
-    # Bağlantıyı hemen test etmek için ilk açılışta bildirim atsın
+    # Bağlantı testi için mesajı döngünün hemen dışına, en başa alıyoruz
     telegram_mesaj_gonder("🤖 Bulut Sistemi Aktif! Bot 7/24 taramaya başladı, bilgisayarınızı kapatabilirsiniz.")
     while True:
         sinyal_kontrol("GÜNLÜK", "1d", "1y", 80)
-        sinyal_kontrol("HAFTALIK", "1wk", "3y", 70)
+        sinyal_kontrol("HAFTALIK", "1wk", "3y", 70)  # c harfi k olarak düzeltildi
         time.sleep(14400) # 4 saat bekler
 
 if __name__ == "__main__":
-    # Web sunucu altyapısını ayrı bir kolda çalıştır
     t = Thread(target=run_flask)
     t.start()
-    # Ana borsa tarama döngüsünü başlat
     ana_dongu()
