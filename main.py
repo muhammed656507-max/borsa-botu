@@ -14,6 +14,7 @@ def home():
     return "Borsa Botu Bulutta Aktif!"
 
 def run_flask():
+    # Flask sunucusunu burada başlatıyoruz
     app.run(host='0.0.0.0', port=8080)
 
 TOKEN = "8660829928:AAEYnGp90WMJk14bxe_SzSfs0-S3YhQhkJ8"
@@ -83,9 +84,8 @@ def sinyal_control(periyot_adi, yf_interval, yf_period, rsi_ust_sinir):
 
 def ana_dongu():
     # Bot ilk açıldığında anında onay mesajı fırlatır
-    telegram_mesaj_gonder("🤖 Bulut Sistemi Güncellendi!\nBotunuz aktifleşti. Her gün saat 10:30, 13:30, 16:30 ve 19:30 saatlerinde otomatik tarama yapacaktır.")
+    telegram_mesaj_gonder("🤖 Bulut Sistemi Başarıyla Güncellendi!\nBotunuz aktifleşti. Her gün saat 10:30, 13:30, 16:30 ve 19:30 saatlerinde otomatik tarama yapacaktır.")
     
-    # 3 saatlik periyot takvimi
     HEDEF_SAATLER = ["10:30", "13:30", "16:30", "19:30"]
     son_calisilan_saat = ""
 
@@ -106,13 +106,13 @@ def ana_dongu():
                 
             son_calisilan_saat = su_an_saat_dakika
             
-        time.sleep(30) # Saati yakalamak için 30 saniyede bir kontrol eder
+        time.sleep(30)
 
 if __name__ == "__main__":
-    # Flask sunucusunu arka planda (Daemon olarak) başlatıyoruz
-    t = Thread(target=run_flask)
-    t.daemon = True
-    t.start()
+    # Flask sunucusunu arka planda (Thread içinde) başlatıyoruz
+    flask_thread = Thread(target=run_flask)
+    flask_thread.daemon = True
+    flask_thread.start()
     
-    # Ana döngüyü ana işlem olarak çalıştırıyoruz, böylece kilitlenmiyor
+    # Ana döngüyü ana akışta çalıştırıyoruz, böylece asla engellenmiyor
     ana_dongu()
