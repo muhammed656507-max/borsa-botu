@@ -1,3 +1,4 @@
+import time
 import requests
 import yfinance as yf
 import pandas as pd
@@ -43,6 +44,9 @@ def sinyal_control(periyot_adi, yf_interval, yf_period, rsi_ust_sinir):
     sinyal_bulundu = False
     for hisse in HISSELER:
         try:
+            # Garanti olsun diye her hisse öncesi tam 2 saniye bekliyoruz
+            time.sleep(2)
+            
             df = yf.download(hisse, period=yf_period, interval=yf_interval, progress=False, auto_adjust=True)
             if df.empty or len(df) < 65:
                 continue
