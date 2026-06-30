@@ -4,18 +4,8 @@ import yfinance as yf
 import pandas as pd
 from flask import Flask
 from threading import Thread
-from datetime import datetime
-import pytz  # Türkiye saat dilimi için
 
 app = Flask('')
-
-@app.route('/')
-def home():
-    return "Borsa Botu Bulutta Aktif!"
-
-def run_flask():
-    # Flask sunucusunu burada başlatıyoruz
-    app.run(host='0.0.0.0', port=8080)
 
 TOKEN = "8660829928:AAEYnGp90WMJk14bxe_SzSfs0-S3YhQhkJ8"
 CHAT_ID = "1270038537"
@@ -82,37 +72,25 @@ def sinyal_control(periyot_adi, yf_interval, yf_period, rsi_ust_sinir):
             pass
     return sinyal_bulundu
 
-def ana_dongu():
-    # Bot ilk açıldığında anında onay mesajı fırlatır
-    telegram_mesaj_gonder("🤖 Bulut Sistemi Başarıyla Güncellendi!\nBotunuz aktifleşti. Her gün saat 10:30, 13:30, 16:30 ve 19:30 saatlerinde otomatik tarama yapacaktır.")
+def tarama_tetikle():
+    telegram_mesaj_gonder("🔄 Otomatik tetikleme alındı, periyodik tarama başladı...")
     
-    HEDEF_SAATLER = ["10:30", "13:30", "16:30", "19:30"]
-    son_calisilan_saat = ""
+    sinyal_g = sinyal_control("GÜNLÜK", "1d", "1y", 80)
+    sinyal_h = sinyal_control("HAFTALIK", "1wk", "3y", 70)
+    
+    if not sinyal_g and not sinyal_h:
+        telegram_mesaj_gonder("✅ Tarama tamamlandı. Kriterlere uyan yeni bir sinyal bulunamadı.")
 
-    tz = pytz.timezone('Europe/Istanbul')
+@app.route('/')
+def home():
+    # Birisi siteye girdiğinde veya cron-job tıkladığında tarama arka planda başlar
+    t = Thread(target=tarama_tetikle)
+    t.start()
+    return "Borsa Botu Tetiklendi ve Taramaya Başladı!"
 
-    while True:
-        simdi = datetime.now(tz)
-        su_an_saat_dakika = simdi.strftime("%H:%M")
-
-        if su_an_saat_dakika in HEDEF_SAATLER and su_an_saat_dakika != son_calisilan_saat:
-            telegram_mesaj_gonder(f"🔄 Saat {su_an_saat_dakika} periyodik taraması başladı...")
-            
-            sinyal_g = sinyal_control("GÜNLÜK", "1d", "1y", 80)
-            sinyal_h = sinyal_control("HAFTALIK", "1wk", "3y", 70)
-            
-            if not sinyal_g and not sinyal_h:
-                telegram_mesaj_gonder(f"✅ Saat {su_an_saat_dakika} taraması tamamlandı. Kriterlere uyan yeni bir sinyal bulunamadı.")
-                
-            son_calisilan_saat = su_an_saat_dakika
-            
-        time.sleep(30)
+def run_flask():
+    app.run(host='0.0.0.0', port=8080)
 
 if __name__ == "__main__":
-    # Flask sunucusunu arka planda (Thread içinde) başlatıyoruz
-    flask_thread = Thread(target=run_flask)
-    flask_thread.daemon = True
-    flask_thread.start()
-    
-    # Ana döngüyü ana akışta çalıştırıyoruz, böylece asla engellenmiyor
-    ana_dongu()
+    telegram_mesaj_gonder("🤖 Bot Başarıyla Güncellendi!\nArtık her link tıklandığında anında tarama yapacaktır.")
+    run_flask()
