@@ -39,7 +39,7 @@ def telegram_mesaj_gonder(mesaj):
     except Exception:
         pass
 
-def sinyal_kontrol(periyot_adi, yf_interval, yf_period, rsi_ust_sinir):
+def sinyal_control(periyot_adi, yf_interval, yf_period, rsi_ust_sinir):
     for hisse in HISSELER:
         try:
             df = yf.download(hisse, period=yf_period, interval=yf_interval, progress=False, auto_adjust=True)
@@ -82,11 +82,11 @@ def sinyal_kontrol(periyot_adi, yf_interval, yf_period, rsi_ust_sinir):
             pass
 
 def ana_dongu():
-    # Bağlantı testi için mesajı döngünün hemen dışına, en başa alıyoruz
+    # Bağlantıyı test etmek için ilk açılışta bildirim atsın
     telegram_mesaj_gonder("🤖 Bulut Sistemi Aktif! Bot 7/24 taramaya başladı, bilgisayarınızı kapatabilirsiniz.")
     while True:
-        sinyal_kontrol("GÜNLÜK", "1d", "1y", 80)
-        sinyal_kontrol("HAFTALIK", "1wk", "3y", 70)  # c harfi k olarak düzeltildi
+        sinyal_control("GÜNLÜK", "1d", "1y", 80)
+        sinyal_control("HAFTALIK", "1wk", "3y", 70)
         time.sleep(14400) # 4 saat bekler
 
 if __name__ == "__main__":
