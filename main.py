@@ -44,10 +44,9 @@ def sinyal_control(periyot_adi, yf_interval, yf_period, rsi_ust_sinir):
     sinyal_bulundu = False
     for hisse in HISSELER:
         try:
-            # Garanti olsun diye her hisse öncesi tam 2 saniye bekliyoruz
             time.sleep(2)
-            
-            df = yf.download(hisse, period=yf_period, interval=yf_interval, progress=False, auto_adjust=True)
+            # grup indirmeyi ve gereksiz çıktıları tamamen kapatıyoruz (group_by=False)
+            df = yf.download(hisse, period=yf_period, interval=yf_interval, progress=False, auto_adjust=True, group_by=False)
             if df.empty or len(df) < 65:
                 continue
             kapanis_serisi = pd.Series(df['Close'].squeeze().dropna())
@@ -76,8 +75,7 @@ def sinyal_control(periyot_adi, yf_interval, yf_period, rsi_ust_sinir):
     return sinyal_bulundu
 
 def tarama_tetikle():
-    telegram_mesaj_gonder("🔄 Otomatik tetikleme alındı, periyodik borsa taraması başladı...")
-    
+    # İlk başlama mesajını kaldırarak cron-job çıktısını iyice küçültüyoruz
     sinyal_g = sinyal_control("GÜNLÜK", "1d", "1y", 80)
     sinyal_h = sinyal_control("HAFTALIK", "1wk", "3y", 70)
     
@@ -88,7 +86,7 @@ def tarama_tetikle():
 def home():
     t = Thread(target=tarama_tetikle)
     t.start()
-    return "Borsa Botu Tetiklendi!"
+    return "OK" # Sadece OK döndürerek çıktıyı sıfırlıyoruz
 
 if __name__ == "__main__":
     app.run(host='0.0.0.0', port=8080)
