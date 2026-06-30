@@ -1,12 +1,11 @@
 import time
 import requests
 import yfinance as yf
-import pandas_ta as ta
 import pandas as pd
 from flask import Flask
 from threading import Thread
 
-# Flask web sunucusu (Render'ın arka planda botu kapatmasını engeller)
+# Flask web sunucusu (Render'ın botu kapatmasını engeller)
 app = Flask('')
 
 @app.route('/')
@@ -39,6 +38,24 @@ def telegram_mesaj_gonder(mesaj):
     except Exception:
         pass
 
+def indikatör_hesapla(kapanislar):
+    # RSI Hesaplama (Kütüphanesiz Saf Matematik)
+    delta = kapanislar.diff()
+    kazanc = delta.clip(lower=0)
+    kayip = -delta.clip(upper=0)
+    
+    ema_kazanc = kazanc.ewm(com=13, adjust=False).mean()
+    ema_kayip = kayip.ewm(com=13, adjust=False).mean()
+    
+    rs = ema_kazanc / (ema_kayip + 1e-10)
+    rsi = 100 - (100 / (1 + rs))
+    
+    # SMA 20 ve 50 Hesaplama
+    sma20 = kapanislar.rolling(window=20).mean()
+    sma50 = kapanislar.rolling(window=50).mean()
+    
+    return rsi, sma20, sma50
+
 def sinyal_control(periyot_adi, yf_interval, yf_period, rsi_ust_sinir):
     for hisse in HISSELER:
         try:
@@ -50,13 +67,8 @@ def sinyal_control(periyot_adi, yf_interval, yf_period, rsi_ust_sinir):
             if len(kapanis_serisi) < 65:
                 continue
 
-            rsi_serisi = ta.rsi(kapanis_serisi, length=14)
-            sma20_serisi = ta.sma(kapanis_serisi, length=20)
-            sma50_serisi = ta.sma(kapanis_serisi, length=50)
+            rsi_serisi, sma20_serisi, sma50_serisi = indikatör_hesapla(kapanis_serisi)
             
-            if rsi_serisi is None or sma20_serisi is None or sma50_serisi is None or len(rsi_serisi) < 2:
-                continue
-                
             son_fiyat = float(kapanis_serisi.iloc[-1])
             son_rsi = float(rsi_serisi.iloc[-1])
             son_sma20 = float(sma20_serisi.iloc[-1])
@@ -82,7 +94,6 @@ def sinyal_control(periyot_adi, yf_interval, yf_period, rsi_ust_sinir):
             pass
 
 def ana_dongu():
-    # Bağlantıyı test etmek için ilk açılışta bildirim atsın
     telegram_mesaj_gonder("🤖 Bulut Sistemi Aktif! Bot 7/24 taramaya başladı, bilgisayarınızı kapatabilirsiniz.")
     while True:
         sinyal_control("GÜNLÜK", "1d", "1y", 80)
